@@ -54,14 +54,16 @@ def masks(video, outdir):
 
 
 def composite(base, maskdir, title, out, fade_in=0.4, crf="16"):
+    dur = subprocess.run(["ffprobe", "-v", "error", "-show_entries", "format=duration", "-of", "csv=p=0", base],
+                         capture_output=True, text=True, check=True).stdout.strip()
     fc = (f"[2:v]format=rgba,fade=t=in:st=0:d={fade_in}:alpha=1[tt];"
-          f"[0:v][tt]overlay=0:0:eof_action=repeat[wt];"
+          f"[0:v][tt]overlay=0:0:eof_action=repeat:shortest=0[wt];"
           f"[1:v]scale={W}:{H}:flags=bicubic,gblur=sigma=2,format=gray[m];"
           f"[0:v][m]alphamerge[person];"
           f"[wt][person]overlay=0:0[v]")
     subprocess.run(["ffmpeg", "-nostdin", "-v", "error", "-y", "-i", base,
                     "-framerate", f"{FPS}", "-i", f"{maskdir}/%05d.png", "-loop", "1", "-i", title,
-                    "-filter_complex", fc, "-map", "[v]", "-map", "0:a", "-shortest",
+                    "-filter_complex", fc, "-map", "[v]", "-map", "0:a", "-t", dur,
                     "-c:v", "libx264", "-preset", "medium", "-crf", crf, "-profile:v", "high", "-pix_fmt", "yuv420p",
                     "-color_primaries", "bt709", "-color_trc", "bt709", "-colorspace", "bt709", "-color_range", "tv",
                     "-c:a", "copy", "-movflags", "+faststart", out], check=True)
