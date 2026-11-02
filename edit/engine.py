@@ -16,7 +16,8 @@ import os, subprocess, math, shutil
 from PIL import Image, ImageDraw, ImageFont, ImageFilter
 
 W, H, FPS = 1080, 1920, 30
-FONT = "/usr/share/fonts/opentype/inter/Inter-Bold.otf"
+FONT = os.path.join(os.path.dirname(os.path.abspath(__file__)), "fonts", "Poppins-SemiBold.ttf")
+TEXT_SIZE = 46
 EMOJI = "/usr/share/fonts/truetype/noto/NotoColorEmoji.ttf"
 TEXT_Y = 1400
 FULL_RANGE = {"r1", "r2"}  # iPhone clips tagged yuvj420p
@@ -31,18 +32,18 @@ def emoji_img(ch, size):
 
 
 def text_png(path, txt, emo):
-    size = 64
+    size = TEXT_SIZE
     f = ImageFont.truetype(FONT, size)
     while f.getlength(txt) > W - 200:
         size -= 2; f = ImageFont.truetype(FONT, size)
     e = emoji_img(emo, int(size * 1.05)) if emo else None
-    gap = 18 if e else 0
+    gap = 12 if e else 0
     tw = f.getlength(txt) + gap + (e.width if e else 0)
     img = Image.new("RGBA", (W, 200), (0, 0, 0, 0))
     x0, y0 = (W - tw) / 2, 50
     sh = Image.new("RGBA", img.size, (0, 0, 0, 0))
-    ImageDraw.Draw(sh).text((x0, y0 + 3), txt, font=f, fill=(0, 0, 0, 150), stroke_width=4, stroke_fill=(0, 0, 0, 150))
-    sh = sh.filter(ImageFilter.GaussianBlur(8))
+    ImageDraw.Draw(sh).text((x0, y0 + 3), txt, font=f, fill=(0, 0, 0, 150), stroke_width=3, stroke_fill=(0, 0, 0, 150))
+    sh = sh.filter(ImageFilter.GaussianBlur(6))
     ImageDraw.Draw(img).text((x0, y0), txt, font=f, fill=(255, 255, 255, 255))
     out = Image.alpha_composite(sh, img)
     if e:
